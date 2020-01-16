@@ -1,6 +1,7 @@
 import functools
 import collections
 
+from config import config
 from ft.espn import Espn
 from ft.team import Team
 from ft.league import League
@@ -18,10 +19,13 @@ class Simulation(object):
         self.period = period
         self.my_team_id = my_team_id
         self.last_num_periods = last_num_periods
-        self.periods =  range(period + 1 - last_num_periods, period + 1)
+        self.periods = range(period + 1 - last_num_periods, period + 1)
         self.league = League()
         self.espn = Espn()
         self.matchup_results_by_period = {}
+        self.stat_wins_by_team = {}
+        self.stat_wins_by_stat = collections.defaultdict(dict)
+        self.overall_wins_by_team = collections.defaultdict(lambda: 0)
         self.build_league()
         self.derive_data()
 
@@ -55,9 +59,27 @@ class Simulation(object):
                 results.append(self.my_team.get_score_against(team, period))
             self.matchup_results_by_period[period] = results
 
+        for team in self.sorted_teams:
+            stat_wins = collections.defaultdict(lambda: 0)
+            for period in self.periods:
+                for opponent in self.sorted_teams:
+                    if opponent is team:
+                        continue
+                    result = team.get_score_against(opponent, period)
+                    if result.is_win:
+                        self.overall_wins_by_team[team] +=1
+                    for stat_id, winner in result.results.items():
+                        if winner is team:
+                            stat_wins[stat_id] += 1
+            self.stat_wins_by_team[team] = stat_wins
+            for stat_id, wins in stat_wins.items():
+                self.stat_wins_by_stat[stat_id][team] = wins
+
     @property
     def historical_results(self):
-        print(f"Show me scores if {self.my_team.abbrev} had played ALL TEAMS in THE LAST {self.last_num_periods} MATCHUP PERIODS.")
+        print(
+            f"Show me scores if {self.my_team.abbrev} had played ALL TEAMS in THE LAST {self.last_num_periods} MATCHUP PERIODS."
+        )
 
         for period, results in self.matchup_results_by_period.items():
             wins = [r for r in results if r.is_win]
@@ -66,13 +88,19 @@ class Simulation(object):
             print(f"MATCHUP {period}: {len(wins)} wins, {len(losses)} losses")
             print("")
             for r in results:
-                print(f"{'W' if r.is_win else 'L'} {r.wins}-{r.losses}-{r.ties} vs. {r.opponent.abbrev}")
+                print(
+                    f"{'W' if r.is_win else 'L'} {r.wins}-{r.losses}-{r.ties} vs. {r.opponent.abbrev}"
+                )
 
     @property
     def historical_records(self):
-        print(f"Historical record vs. each team, if {self.my_team.abbrev} had played all teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:")
+        print(
+            f"Historical record vs. each team, if {self.my_team.abbrev} had played all teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:"
+        )
         print("")
-        historical_records = collections.defaultdict(lambda: {"wins": 0, "losses": 0, "ties": 0})
+        historical_records = collections.defaultdict(
+            lambda: {"wins": 0, "losses": 0, "ties": 0}
+        )
         for period, results in self.matchup_results_by_period.items():
             for r in results:
                 res_type = None
@@ -88,24 +116,43 @@ class Simulation(object):
             losses = record["losses"]
             ties = record["ties"]
             is_win = wins > losses
-            print(f"{'W' if is_win else 'L'} {wins}-{losses}-{ties} vs. {opponent.abbrev}")
+            print(
+                f"{'W' if is_win else 'L'} {wins}-{losses}-{ties} vs. {opponent.abbrev}"
+            )
 
     @property
     def historical_total_wins(self):
-        print(f"Number of wins if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:")
+        print(
+            f"Number of wins if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:"
+        )
         print("")
-        rankings = []
-        for team in self.sorted_teams:
-            overall_wins = 0
-            for period in self.periods:
-                for opponent in self.sorted_teams:
-                    if opponent is team:
-                        continue
-                    result =  team.get_score_against(opponent, period)
-                    if result.is_win:
-                        overall_wins += 1
-            rankings.append((team, overall_wins))
-        sorted_rankings = sorted(rankings, key=lambda r: r[1], reverse=True)
+        sorted_rankings = sorted(self.overall_wins_by_team.items(), key=lambda r: r[1], reverse=True)
         for team, overall_wins in sorted_rankings:
             print(f"{team.abbrev} - {overall_wins}")
 
+        print("")
+        print("By stat:")
+        print("")
+        for stat_id in config.SCORING_STAT_IDS:
+            stat_rankings = [
+                (team, stat_wins[stat_id])
+                for team, stat_wins in self.stat_wins_by_team.items()
+            ]
+            sorted_rankings = sorted(stat_rankings, key=lambda r: r[1], reverse=True)
+            print(f"{config.STAT_NAMES[stat_id]}:")
+            print("")
+            for team, overall_wins in sorted_rankings:
+                print(f"{team.abbrev} - {overall_wins}")
+            print("")
+
+    @property
+    def historical_stat_rankings(self):
+        print(f"{self.my_team.abbrev}'s ranking by stat if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:")
+        print("")
+        stat_ranks = []
+        for stat_id, wins_by_team in self.stat_wins_by_stat.items():
+            ranked_teams = sorted(wins_by_team.items(), key=lambda i: i[1], reverse=True)
+            rank = [i[0] for i in ranked_teams].index(self.my_team) + 1
+            stat_ranks.append([stat_id, rank])
+        for stat_id, rank in sorted(stat_ranks, key=lambda i: i[1]):
+            print(f"{config.STAT_NAMES[stat_id]}: {rank}")
