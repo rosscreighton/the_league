@@ -3,8 +3,9 @@ from collections import defaultdict
 from ft.simulation import Simulation
 
 CURRENT_MATCHUP_PERIOD = 13
+MY_TEAM = "ROSS"
 
-sim = Simulation(CURRENT_MATCHUP_PERIOD)
+sim = Simulation(CURRENT_MATCHUP_PERIOD, MY_TEAM)
 
 reports =  [
     "historical_results",

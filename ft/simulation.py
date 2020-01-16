@@ -9,15 +9,15 @@ from ft.matchup import Matchup
 
 
 class Simulation(object):
-    def __init__(self, period, my_team_id=3, last_num_periods=3):
+    def __init__(self, period, my_team, last_num_periods=3):
         """
         period (int): The matchup period for which to run the analysis
-        my_team_id (int): The team ID of the team we want to analyze
+        my_team (str): The abbrev of team we want to analyze
         last_num_periods (int): Nuber of historical periods to include in
             analysis
         """
         self.period = period
-        self.my_team_id = my_team_id
+        self.my_team_abbrev = my_team
         self.last_num_periods = last_num_periods
         self.periods = range(period + 1 - last_num_periods, period + 1)
         self.league = League()
@@ -44,7 +44,7 @@ class Simulation(object):
 
     @property
     def my_team(self):
-        return self.league.teams[self.my_team_id]
+        return self.league.get_team_by_abbrev(self.my_team_abbrev)
 
     @property
     def sorted_teams(self):
