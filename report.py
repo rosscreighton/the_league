@@ -8,6 +8,7 @@ MY_TEAM = "ROSS"
 sim = Simulation(CURRENT_MATCHUP_PERIOD, MY_TEAM)
 
 reports =  [
+    "current_matchup_prediction",
     "historical_results",
     "historical_records",
     "historical_total_wins",

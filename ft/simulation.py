@@ -75,6 +75,31 @@ class Simulation(object):
             for stat_id, wins in stat_wins.items():
                 self.stat_wins_by_stat[stat_id][team] = wins
 
+    def get_stat_ranks_for_team(self, team):
+        """
+        Args:
+            team (ft.team.Team)
+
+        Returns:
+            (dict): Maps stat ID to rank
+        """
+        stat_ranks = {}
+        for stat_id, wins_by_team in self.stat_wins_by_stat.items():
+            ranked_teams = sorted(wins_by_team.items(), key=lambda i: i[1], reverse=True)
+            rank = [i[0] for i in ranked_teams].index(team) + 1
+            stat_ranks[stat_id] = rank
+        return stat_ranks
+
+    @property
+    def current_opponent(self):
+        """
+        Returns:
+            (ft.team.Team)
+        """
+        curr_matchup = self.my_team.matchups[self.period]
+        opp_id = curr_matchup.away_id if self.my_team.id == curr_matchup.home_id else curr_matchup.home_id
+        return self.league.teams[opp_id]
+
     @property
     def historical_results(self):
         print(
@@ -149,10 +174,23 @@ class Simulation(object):
     def historical_stat_rankings(self):
         print(f"{self.my_team.abbrev}'s ranking by stat if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:")
         print("")
-        stat_ranks = []
-        for stat_id, wins_by_team in self.stat_wins_by_stat.items():
-            ranked_teams = sorted(wins_by_team.items(), key=lambda i: i[1], reverse=True)
-            rank = [i[0] for i in ranked_teams].index(self.my_team) + 1
-            stat_ranks.append([stat_id, rank])
-        for stat_id, rank in sorted(stat_ranks, key=lambda i: i[1]):
+        stat_ranks = self.get_stat_ranks_for_team(self.my_team)
+        for stat_id, rank in sorted(stat_ranks.items(), key=lambda i: i[1]):
             print(f"{config.STAT_NAMES[stat_id]}: {rank}")
+
+    @property
+    def current_matchup_prediction(self):
+        print(f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}")
+        print(f"")
+        my_ranks = self.get_stat_ranks_for_team(self.my_team)
+        their_ranks = self.get_stat_ranks_for_team(self.current_opponent)
+        wins = []
+        for stat_id, rank in my_ranks.items():
+            if rank < their_ranks[stat_id]:
+                wins.append(stat_id)
+        total = len(my_ranks.keys())
+        loss_count = total - len(wins)
+        print(f"{self.my_team.abbrev} is projected to {'win' if len(wins) > loss_count else 'lose'} {len(wins)}-{loss_count}")
+        print("")
+        for stat_id in my_ranks.keys():
+            print(f"{config.STAT_NAMES[stat_id]}: {'W' if stat_id in wins else 'L'}")

@@ -18,4 +18,4 @@ class League(object):
         Returns:
             (ft.team.Team)
         """
-        return next(t for t in self.teams.values() if t.abbrev == self.my_team_abbrev)
+        return next(t for t in self.teams.values() if t.abbrev == abbrev)
