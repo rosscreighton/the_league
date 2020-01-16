@@ -8,3 +8,4 @@ class League(object):
             team (ft.team.Team)
         """
         self.teams[team.id] = team
+        team.league = self

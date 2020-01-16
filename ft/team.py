@@ -1,19 +1,19 @@
 from config import config
 
+from ft.matchup_result import MatchupResult
+
 
 class Team(object):
-    def __init__(self, id_, abbrev, league):
+    def __init__(self, id_, abbrev):
         """
         Args:
             id_ (int): The ESPN team ID
             abbrev (str): The ESPN abbreviation
-            league (ft.league.League)
         """
         self.id = id_
         self.abbrev = abbrev
-        self.league = league
+        self.league = None
         self.matchups = {}
-        league.add_team(self)
 
     def add_matchup(self, matchup):
         """
@@ -27,26 +27,19 @@ class Team(object):
         """
         Args:
             period (int)
+
+        Returns:
+            (dict): Maps stat ID to score for this team and period
         """
         return self.matchups[period].box_score[self.id]
 
-    def get_score_against(self, team_id, period):
+    def get_score_against(self, opponent, period):
         """
         Args:
-            team_id (int)
+            opponent (ft.team.Team)
             period (int)
+
+        Returns:
+            (ft.matchup_result.MatchupResult)
         """
-        opponent = self.league.teams[team_id]
-        their_scores = opponent.box_score_for_period(period)
-        our_scores = self.box_score_for_period(period)
-        wins = 0
-        losses = 0
-        ties = 0
-        for stat_id in config.SCORING_STAT_IDS:
-            if our_scores[stat_id] > their_scores[stat_id]:
-                wins += 1
-            elif our_scores[stat_id] < their_scores[stat_id]:
-                losses += 1
-            else:
-                ties += 1
-        return (wins, losses, ties)
+        return MatchupResult(self, opponent, period)

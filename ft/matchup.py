@@ -16,20 +16,35 @@ class Matchup(object):
 
     @property
     def period(self):
+        """
+        Returns:
+            (int)
+        """
         return self.data["matchupPeriodId"]
 
     @property
     def home_id(self):
+        """
+        Returns:
+            (int)
+        """
         return self.data["home"]["teamId"]
 
     @property
     def away_id(self):
+        """
+        Returns:
+            (int)
+        """
         return self.data["away"]["teamId"]
 
     def calc_stats(self, team_type):
         """
         Args:
             team_type (str): home|away
+
+        Returns:
+            scoring_stats (dict): Maps stat ID to score
         """
         team_data = self.data[team_type]
         stats_up_to_current_scoring_period = {
