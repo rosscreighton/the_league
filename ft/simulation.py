@@ -71,6 +71,8 @@ class Simulation(object):
                     for stat_id, winner in result.results.items():
                         if winner is team:
                             stat_wins[stat_id] += 1
+                        else:
+                            stat_wins[stat_id] = stat_wins[stat_id]
             self.stat_wins_by_team[team] = stat_wins
             for stat_id, wins in stat_wins.items():
                 self.stat_wins_by_stat[stat_id][team] = wins

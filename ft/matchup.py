@@ -73,12 +73,12 @@ class Matchup(object):
 
         scoring_stats = {}
 
-        scoring_stats[config.STAT_IDS["FG%"]] = (
-            counted_stats[config.STAT_IDS["FGM"]] / counted_stats[config.STAT_IDS["FGA"]]
-        )
-        scoring_stats[config.STAT_IDS["FT%"]] = (
-            counted_stats[config.STAT_IDS["FTM"]] / counted_stats[config.STAT_IDS["FTA"]]
-        )
+        fgm = counted_stats[config.STAT_IDS["FGM"]]
+        fga = counted_stats[config.STAT_IDS["FGA"]]
+        ftm = counted_stats[config.STAT_IDS["FTM"]]
+        fta = counted_stats[config.STAT_IDS["FTA"]]
+        scoring_stats[config.STAT_IDS["FG%"]] = fgm / fga if fga else 0
+        scoring_stats[config.STAT_IDS["FT%"]] = ftm / fta if fta else 0
 
         for stat_id, score in counted_stats.items():
             if stat_id not in [
