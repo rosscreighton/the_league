@@ -191,8 +191,12 @@ class Simulation(object):
             if rank < their_ranks[stat_id]:
                 wins.append(stat_id)
         total = len(my_ranks.keys())
-        loss_count = total - len(wins)
-        print(f"{self.my_team.abbrev} is projected to {'win' if len(wins) > loss_count else 'lose'} {len(wins)}-{loss_count}")
+        win_count = len(wins)
+        loss_count = total - win_count
+        print(f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count}")
         print("")
         for stat_id in my_ranks.keys():
-            print(f"{config.STAT_NAMES[stat_id]}: {'W' if stat_id in wins else 'L'}")
+            stat_name = config.STAT_NAMES[stat_id]
+            my_rank = my_ranks[stat_id]
+            their_rank = their_ranks[stat_id]
+            print(f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})")
