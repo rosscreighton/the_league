@@ -50,6 +50,20 @@ class Simulation(object):
     def sorted_teams(self):
         return sorted(self.league.teams.values(), key=lambda t: t.abbrev)
 
+    def run(self):
+        res = ""
+        reports = [
+            "current_matchup_prediction",
+            "historical_stat_rankings",
+            "historical_results",
+            "historical_records",
+            "historical_total_wins",
+        ]
+        for rep in reports:
+            res += getattr(self, rep)
+            res += "\n"
+        return res
+
     def derive_data(self):
         for period in self.periods:
             results = []
@@ -67,7 +81,7 @@ class Simulation(object):
                         continue
                     result = team.get_score_against(opponent, period)
                     if result.is_win:
-                        self.overall_wins_by_team[team] +=1
+                        self.overall_wins_by_team[team] += 1
                     for stat_id, winner in result.results.items():
                         if winner is team:
                             stat_wins[stat_id] += 1
@@ -87,7 +101,9 @@ class Simulation(object):
         """
         stat_ranks = {}
         for stat_id, wins_by_team in self.stat_wins_by_stat.items():
-            ranked_teams = sorted(wins_by_team.items(), key=lambda i: i[1], reverse=True)
+            ranked_teams = sorted(
+                wins_by_team.items(), key=lambda i: i[1], reverse=True
+            )
             rank = [i[0] for i in ranked_teams].index(team) + 1
             stat_ranks[stat_id] = rank
         return stat_ranks
@@ -99,32 +115,34 @@ class Simulation(object):
             (ft.team.Team)
         """
         curr_matchup = self.my_team.matchups[self.period]
-        opp_id = curr_matchup.away_id if self.my_team.id == curr_matchup.home_id else curr_matchup.home_id
+        opp_id = (
+            curr_matchup.away_id
+            if self.my_team.id == curr_matchup.home_id
+            else curr_matchup.home_id
+        )
         return self.league.teams[opp_id]
 
     @property
     def historical_results(self):
-        print(
-            f"Show me scores if {self.my_team.abbrev} had played ALL TEAMS in THE LAST {self.last_num_periods} MATCHUP PERIODS."
-        )
+        res = ""
+        res += f"Show me scores if {self.my_team.abbrev} had played ALL TEAMS in THE LAST {self.last_num_periods} MATCHUP PERIODS.\n"
 
         for period, results in self.matchup_results_by_period.items():
             wins = [r for r in results if r.is_win]
             losses = [r for r in results if not r.is_win]
-            print("")
-            print(f"MATCHUP {period}: {len(wins)} wins, {len(losses)} losses")
-            print("")
+            res += "\n"
+            res += f"MATCHUP {period}: {len(wins)} wins, {len(losses)} losses\n"
+            res += "\n"
             for r in results:
-                print(
-                    f"{'W' if r.is_win else 'L'} {r.wins}-{r.losses}-{r.ties} vs. {r.opponent.abbrev}"
-                )
+                res += f"{'W' if r.is_win else 'L'} {r.wins}-{r.losses}-{r.ties} vs. {r.opponent.abbrev}\n"
+        return res
 
     @property
     def historical_records(self):
-        print(
-            f"Historical record vs. each team, if {self.my_team.abbrev} had played all teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:"
-        )
-        print("")
+        res = ""
+        res += f"Historical record vs. each team, if {self.my_team.abbrev} had played all teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
+
+        res += "\n"
         historical_records = collections.defaultdict(
             lambda: {"wins": 0, "losses": 0, "ties": 0}
         )
@@ -143,47 +161,56 @@ class Simulation(object):
             losses = record["losses"]
             ties = record["ties"]
             is_win = wins > losses
-            print(
-                f"{'W' if is_win else 'L'} {wins}-{losses}-{ties} vs. {opponent.abbrev}"
+            res += (
+                f"{'W' if is_win else 'L'} {wins}-{losses}-{ties} vs. {opponent.abbrev}\n"
             )
+        return res
 
     @property
     def historical_total_wins(self):
-        print(
-            f"Number of wins if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:"
-        )
-        print("")
-        sorted_rankings = sorted(self.overall_wins_by_team.items(), key=lambda r: r[1], reverse=True)
-        for team, overall_wins in sorted_rankings:
-            print(f"{team.abbrev} - {overall_wins}")
+        res = ""
+        res += f"Number of wins if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
 
-        print("")
-        print("By stat:")
-        print("")
+        res += "\n"
+        sorted_rankings = sorted(
+            self.overall_wins_by_team.items(), key=lambda r: r[1], reverse=True
+        )
+        for team, overall_wins in sorted_rankings:
+            res += f"{team.abbrev} - {overall_wins}\n"
+
+        res += "\n"
+        res += "By stat:\n"
+        res += "\n"
         for stat_id in config.SCORING_STAT_IDS:
             stat_rankings = [
                 (team, stat_wins[stat_id])
                 for team, stat_wins in self.stat_wins_by_team.items()
             ]
             sorted_rankings = sorted(stat_rankings, key=lambda r: r[1], reverse=True)
-            print(f"{config.STAT_NAMES[stat_id]}:")
-            print("")
+            res += f"{config.STAT_NAMES[stat_id]}:\n"
+            res += "\n"
             for team, overall_wins in sorted_rankings:
-                print(f"{team.abbrev} - {overall_wins}")
-            print("")
+                res += f"{team.abbrev} - {overall_wins}\n"
+            res += "\n"
+        return res
 
     @property
     def historical_stat_rankings(self):
-        print(f"{self.my_team.abbrev}'s ranking by stat if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:")
-        print("")
+        res = ""
+        res += f"{self.my_team.abbrev}'s ranking by stat if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
+        res += "\n"
         stat_ranks = self.get_stat_ranks_for_team(self.my_team)
         for stat_id, rank in sorted(stat_ranks.items(), key=lambda i: i[1]):
-            print(f"{config.STAT_NAMES[stat_id]}: {rank}")
+            res += f"{config.STAT_NAMES[stat_id]}: {rank}\n"
+        return res
 
     @property
     def current_matchup_prediction(self):
-        print(f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}")
-        print(f"")
+        res = ""
+        res += (
+            f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}\n"
+        )
+        res += "\n"
         my_ranks = self.get_stat_ranks_for_team(self.my_team)
         their_ranks = self.get_stat_ranks_for_team(self.current_opponent)
         wins = []
@@ -193,10 +220,11 @@ class Simulation(object):
         total = len(my_ranks.keys())
         win_count = len(wins)
         loss_count = total - win_count
-        print(f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count}")
-        print("")
+        res += f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count} based on data from THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
+        res += "\n"
         for stat_id in my_ranks.keys():
             stat_name = config.STAT_NAMES[stat_id]
             my_rank = my_ranks[stat_id]
             their_rank = their_ranks[stat_id]
-            print(f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})")
+            res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})\n"
+        return res
