@@ -32,7 +32,7 @@ TEAM_TEMPLATE = """
 </head>
 <body>
     {% for report_name in [
-        "current_matchup_prediction",
+        "next_matchup_prediction",
         "historical_stat_rankings",
         "historical_results",
         "historical_records",

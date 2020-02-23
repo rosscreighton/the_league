@@ -40,6 +40,7 @@ class Simulation(object):
 
     def build_league(self):
         data = self.espn.fetch_league_data(self.period)
+        self.league.next_matchup_data = self.espn.fetch_league_data(self.period + 1)
         for team_data in data["teams"]:
             team = Team(team_data["id"], team_data["abbrev"])
             self.league.add_team(team)
@@ -64,7 +65,7 @@ class Simulation(object):
             **{
                 report_name: getattr(self, report_name)
                 for report_name in [
-                    "current_matchup_prediction",
+                    "next_matchup_prediction",
                     "historical_stat_rankings",
                     "historical_results",
                     "historical_records",
@@ -214,10 +215,11 @@ class Simulation(object):
         )
 
     @property
-    def current_matchup_prediction(self):
+    def next_matchup_prediction(self):
         res = ""
         my_ranks = self.get_stat_ranks_for_team(self.my_team)
-        their_ranks = self.get_stat_ranks_for_team(self.current_opponent)
+        next_team = self.league.get_next_matchup_for_team(self.my_team)
+        their_ranks = self.get_stat_ranks_for_team(next_team)
         wins = []
         for stat_id, rank in my_ranks.items():
             if rank < their_ranks[stat_id]:
@@ -233,30 +235,5 @@ class Simulation(object):
             their_rank = their_ranks[stat_id]
             res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})<br />"
         return ReportResult(
-            f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}",
-            res,
-        )
-
-    @property
-    def current_matchup_prediction(self):
-        res = ""
-        my_ranks = self.get_stat_ranks_for_team(self.my_team)
-        their_ranks = self.get_stat_ranks_for_team(self.current_opponent)
-        wins = []
-        for stat_id, rank in my_ranks.items():
-            if rank < their_ranks[stat_id]:
-                wins.append(stat_id)
-        total = len(my_ranks.keys())
-        win_count = len(wins)
-        loss_count = total - win_count
-        res += f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count} based on data from THE LAST {self.last_num_periods} MATCHUP PERIODS:<br />"
-        res += "<br />"
-        for stat_id in my_ranks.keys():
-            stat_name = config.STAT_NAMES[stat_id]
-            my_rank = my_ranks[stat_id]
-            their_rank = their_ranks[stat_id]
-            res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})<br />"
-        return ReportResult(
-            f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}",
-            res,
+            f"{self.my_team.abbrev}'s next matchup is {next_team.abbrev}", res
         )
