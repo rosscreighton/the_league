@@ -8,6 +8,15 @@ from ft.league import League
 from ft.matchup import Matchup
 
 
+class SimulationResult(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
+ReportResult = collections.namedtuple("ReportResult", ["heading", "content"])
+
+
 class Simulation(object):
     def __init__(self, period, my_team, last_num_periods=3):
         """
@@ -51,18 +60,18 @@ class Simulation(object):
         return sorted(self.league.teams.values(), key=lambda t: t.abbrev)
 
     def run(self):
-        res = ""
-        reports = [
-            "current_matchup_prediction",
-            "historical_stat_rankings",
-            "historical_results",
-            "historical_records",
-            "historical_total_wins",
-        ]
-        for rep in reports:
-            res += getattr(self, rep)
-            res += "\n"
-        return res
+        return SimulationResult(
+            **{
+                report_name: getattr(self, report_name)
+                for report_name in [
+                    "current_matchup_prediction",
+                    "historical_stat_rankings",
+                    "historical_results",
+                    "historical_records",
+                    "historical_total_wins",
+                ]
+            }
+        )
 
     def derive_data(self):
         for period in self.periods:
@@ -125,24 +134,22 @@ class Simulation(object):
     @property
     def historical_results(self):
         res = ""
-        res += f"Show me scores if {self.my_team.abbrev} had played ALL TEAMS in THE LAST {self.last_num_periods} MATCHUP PERIODS.\n"
-
         for period, results in self.matchup_results_by_period.items():
             wins = [r for r in results if r.is_win]
             losses = [r for r in results if not r.is_win]
-            res += "\n"
-            res += f"MATCHUP {period}: {len(wins)} wins, {len(losses)} losses\n"
-            res += "\n"
+            res += "<br />"
+            res += f"MATCHUP {period}: {len(wins)} wins, {len(losses)} losses<br />"
+            res += "<br />"
             for r in results:
-                res += f"{'W' if r.is_win else 'L'} {r.wins}-{r.losses}-{r.ties} vs. {r.opponent.abbrev}\n"
-        return res
+                res += f"{'W' if r.is_win else 'L'} {r.wins}-{r.losses}-{r.ties} vs. {r.opponent.abbrev}<br />"
+        return ReportResult(
+            f"Scores if {self.my_team.abbrev} had played ALL TEAMS in THE LAST {self.last_num_periods} MATCHUP PERIODS.",
+            res,
+        )
 
     @property
     def historical_records(self):
         res = ""
-        res += f"Historical record vs. each team, if {self.my_team.abbrev} had played all teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
-
-        res += "\n"
         historical_records = collections.defaultdict(
             lambda: {"wins": 0, "losses": 0, "ties": 0}
         )
@@ -161,56 +168,54 @@ class Simulation(object):
             losses = record["losses"]
             ties = record["ties"]
             is_win = wins > losses
-            res += (
-                f"{'W' if is_win else 'L'} {wins}-{losses}-{ties} vs. {opponent.abbrev}\n"
-            )
-        return res
+            res += f"{'W' if is_win else 'L'} {wins}-{losses}-{ties} vs. {opponent.abbrev}<br />"
+        return ReportResult(
+            f"Historical record vs. each team, if {self.my_team.abbrev} had played all teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:",
+            res,
+        )
 
     @property
     def historical_total_wins(self):
         res = ""
-        res += f"Number of wins if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
-
-        res += "\n"
         sorted_rankings = sorted(
             self.overall_wins_by_team.items(), key=lambda r: r[1], reverse=True
         )
         for team, overall_wins in sorted_rankings:
-            res += f"{team.abbrev} - {overall_wins}\n"
+            res += f"{team.abbrev} - {overall_wins}<br />"
 
-        res += "\n"
-        res += "By stat:\n"
-        res += "\n"
+        res += "<br />"
+        res += "By stat:<br />"
+        res += "<br />"
         for stat_id in config.SCORING_STAT_IDS:
             stat_rankings = [
                 (team, stat_wins[stat_id])
                 for team, stat_wins in self.stat_wins_by_team.items()
             ]
             sorted_rankings = sorted(stat_rankings, key=lambda r: r[1], reverse=True)
-            res += f"{config.STAT_NAMES[stat_id]}:\n"
-            res += "\n"
+            res += f"{config.STAT_NAMES[stat_id]}:<br />"
+            res += "<br />"
             for team, overall_wins in sorted_rankings:
-                res += f"{team.abbrev} - {overall_wins}\n"
-            res += "\n"
-        return res
+                res += f"{team.abbrev} - {overall_wins}<br />"
+            res += "<br />"
+        return ReportResult(
+            f"Number of wins if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:",
+            res,
+        )
 
     @property
     def historical_stat_rankings(self):
         res = ""
-        res += f"{self.my_team.abbrev}'s ranking by stat if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
-        res += "\n"
         stat_ranks = self.get_stat_ranks_for_team(self.my_team)
         for stat_id, rank in sorted(stat_ranks.items(), key=lambda i: i[1]):
-            res += f"{config.STAT_NAMES[stat_id]}: {rank}\n"
-        return res
+            res += f"{config.STAT_NAMES[stat_id]}: {rank}<br />"
+        return ReportResult(
+            f"{self.my_team.abbrev}'s ranking by stat if each team had played all other teams in THE LAST {self.last_num_periods} MATCHUP PERIODS:",
+            res,
+        )
 
     @property
     def current_matchup_prediction(self):
         res = ""
-        res += (
-            f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}\n"
-        )
-        res += "\n"
         my_ranks = self.get_stat_ranks_for_team(self.my_team)
         their_ranks = self.get_stat_ranks_for_team(self.current_opponent)
         wins = []
@@ -220,11 +225,38 @@ class Simulation(object):
         total = len(my_ranks.keys())
         win_count = len(wins)
         loss_count = total - win_count
-        res += f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count} based on data from THE LAST {self.last_num_periods} MATCHUP PERIODS:\n"
-        res += "\n"
+        res += f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count} based on data from THE LAST {self.last_num_periods} MATCHUP PERIODS:<br />"
+        res += "<br />"
         for stat_id in my_ranks.keys():
             stat_name = config.STAT_NAMES[stat_id]
             my_rank = my_ranks[stat_id]
             their_rank = their_ranks[stat_id]
-            res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})\n"
-        return res
+            res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})<br />"
+        return ReportResult(
+            f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}",
+            res,
+        )
+
+    @property
+    def current_matchup_prediction(self):
+        res = ""
+        my_ranks = self.get_stat_ranks_for_team(self.my_team)
+        their_ranks = self.get_stat_ranks_for_team(self.current_opponent)
+        wins = []
+        for stat_id, rank in my_ranks.items():
+            if rank < their_ranks[stat_id]:
+                wins.append(stat_id)
+        total = len(my_ranks.keys())
+        win_count = len(wins)
+        loss_count = total - win_count
+        res += f"{self.my_team.abbrev} is projected to {'win' if win_count > loss_count else 'lose'} {win_count}-{loss_count} based on data from THE LAST {self.last_num_periods} MATCHUP PERIODS:<br />"
+        res += "<br />"
+        for stat_id in my_ranks.keys():
+            stat_name = config.STAT_NAMES[stat_id]
+            my_rank = my_ranks[stat_id]
+            their_rank = their_ranks[stat_id]
+            res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})<br />"
+        return ReportResult(
+            f"{self.my_team.abbrev}'s current matchup is {self.current_opponent.abbrev}",
+            res,
+        )
