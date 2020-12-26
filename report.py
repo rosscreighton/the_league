@@ -6,7 +6,7 @@ from jinja2 import Template
 from ft.simulation import Simulation
 from ft.template import HOME_TEMPLATE, TEAM_TEMPLATE
 
-CURRENT_MATCHUP_PERIOD = 18
+CURRENT_MATCHUP_PERIOD = 1
 MY_TEAM = "ROSS"
 
 ALL_TEAMS = [

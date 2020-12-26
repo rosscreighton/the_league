@@ -28,7 +28,7 @@ class Simulation(object):
         self.period = period
         self.my_team_abbrev = my_team
         self.last_num_periods = last_num_periods
-        self.periods = range(period + 1 - last_num_periods, period + 1)
+        self.periods = range(max(period + 1 - last_num_periods, 1), period + 1)
         self.league = League()
         self.espn = Espn()
         self.matchup_results_by_period = {}
@@ -40,7 +40,7 @@ class Simulation(object):
 
     def build_league(self):
         data = self.espn.fetch_league_data(self.period)
-        self.league.next_matchup_data = self.espn.fetch_league_data(self.period + 1)
+        self.league.next_matchup_data = data
         for team_data in data["teams"]:
             team = Team(team_data["id"], team_data["abbrev"])
             self.league.add_team(team)
