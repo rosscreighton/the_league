@@ -1,4 +1,5 @@
 import datetime
+import logging
 from collections import defaultdict
 
 from jinja2 import Template
@@ -6,7 +7,10 @@ from jinja2 import Template
 from ft.simulation import Simulation
 from ft.template import HOME_TEMPLATE, TEAM_TEMPLATE
 
-CURRENT_MATCHUP_PERIOD = 1
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+CURRENT_MATCHUP_PERIOD = 2
 MY_TEAM = "ROSS"
 
 ALL_TEAMS = [
@@ -22,12 +26,6 @@ ALL_TEAMS = [
     "ROSS",
 ]
 
-sim = Simulation(CURRENT_MATCHUP_PERIOD, MY_TEAM, last_num_periods=1)
-
-
-def run():
-    print(sim.run())
-
 
 def generate_all_teams():
     today_str = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -37,12 +35,15 @@ def generate_all_teams():
     team_template = Template(TEAM_TEMPLATE)
     for team in ALL_TEAMS:
         print(f"Generating {team}")
-        sim = Simulation(CURRENT_MATCHUP_PERIOD, team, last_num_periods=3)
-        simulation_result = sim.run()
+        try:
+            sim = Simulation(CURRENT_MATCHUP_PERIOD, team, last_num_periods=3)
+            simulation_result = sim.run()
+        except:
+            logger.exception("Could not run simulation for %s", team)
+            continue
         with open(f"public/{team}.html", "w") as f:
             f.write(team_template.render(simulation_result=simulation_result))
 
 
 if __name__ == "__main__":
-    # run()
     generate_all_teams()

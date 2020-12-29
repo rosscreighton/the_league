@@ -31,7 +31,7 @@ class Espn(object):
             segment (int): Not sure what this is yet. Always 0 for now.
             league_id (int)
         """
-        self.season = kwargs.pop("season", 2020)
+        self.season = kwargs.pop("season", 2021)
         self.segment = kwargs.pop("segment", 0)
         self.league_id = kwargs.pop("league_id", 239167)
         self.session_token = kwargs.pop("session_token", SESSION_TOKEN)
@@ -42,7 +42,11 @@ class Espn(object):
             matchup_period (str)
         """
         cookies = {"espn_s2": SESSION_TOKEN}
-        headers = {"x-fantasy-filter": '{"schedule":{"filterMatchupPeriodIds":{"value":[' + str(matchup_period) + ']}}}'}
+        headers = {
+            "x-fantasy-filter": '{"schedule":{"filterMatchupPeriodIds":{"value":['
+            + str(matchup_period)
+            + "]}}}"
+        }
         query_params = "?" + "&".join([f"{k}={v}" for k, v in QUERY_PARAMS])
         url = f"https://fantasy.espn.com/apis/v3/games/fba/seasons/{self.season}/segments/0/leagues/{self.league_id}{query_params}"
         res = requests.get(url, cookies=cookies, headers=headers)

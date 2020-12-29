@@ -40,7 +40,6 @@ class Simulation(object):
 
     def build_league(self):
         data = self.espn.fetch_league_data(self.period)
-        self.league.next_matchup_data = data
         for team_data in data["teams"]:
             team = Team(team_data["id"], team_data["abbrev"])
             self.league.add_team(team)
@@ -48,7 +47,7 @@ class Simulation(object):
         for period in self.periods:
             data = self.espn.fetch_league_data(period)
             for matchup_data in data["schedule"]:
-                matchup = Matchup(matchup_data)
+                matchup = Matchup(matchup_data, self.league)
                 self.league.teams[matchup.home_id].add_matchup(matchup)
                 self.league.teams[matchup.away_id].add_matchup(matchup)
 
@@ -65,6 +64,7 @@ class Simulation(object):
             **{
                 report_name: getattr(self, report_name)
                 for report_name in [
+                    "current_matchup_prediction",
                     "next_matchup_prediction",
                     "historical_stat_rankings",
                     "historical_results",
@@ -92,6 +92,10 @@ class Simulation(object):
                     result = team.get_score_against(opponent, period)
                     if result.is_win:
                         self.overall_wins_by_team[team] += 1
+                    else:
+                        self.overall_wins_by_team[team] = self.overall_wins_by_team[
+                            team
+                        ]
                     for stat_id, winner in result.results.items():
                         if winner is team:
                             stat_wins[stat_id] += 1
@@ -185,7 +189,7 @@ class Simulation(object):
             res += f"{team.abbrev} - {overall_wins}<br />"
 
         res += "<br />"
-        res += "By stat:<br />"
+        res += "Number of wins by stat:<br />"
         res += "<br />"
         for stat_id in config.SCORING_STAT_IDS:
             stat_rankings = [
@@ -214,12 +218,10 @@ class Simulation(object):
             res,
         )
 
-    @property
-    def next_matchup_prediction(self):
+    def matchup_prediction(self, team):
         res = ""
         my_ranks = self.get_stat_ranks_for_team(self.my_team)
-        next_team = self.league.get_next_matchup_for_team(self.my_team)
-        their_ranks = self.get_stat_ranks_for_team(next_team)
+        their_ranks = self.get_stat_ranks_for_team(team)
         wins = []
         for stat_id, rank in my_ranks.items():
             if rank < their_ranks[stat_id]:
@@ -234,6 +236,29 @@ class Simulation(object):
             my_rank = my_ranks[stat_id]
             their_rank = their_ranks[stat_id]
             res += f"{'W' if stat_id in wins else 'L'} {stat_name} ({my_rank} vs. {their_rank})<br />"
+        return res
+
+    @property
+    def current_matchup_prediction(self):
+        current_team = self.my_team.get_opponent_by_period(self.period)
+        res = self.matchup_prediction(current_team)
+        return ReportResult(
+            f"{self.my_team.abbrev}'s current matchup is {current_team.abbrev}", res
+        )
+
+    @property
+    def next_matchup_prediction(self):
+        next_data = self.espn.fetch_league_data(self.period + 1)
+        next_team = None
+        for matchup_data in next_data["schedule"]:
+            away_id = matchup_data["away"]["teamId"]
+            home_id = matchup_data["home"]["teamId"]
+            if self.my_team.id == away_id:
+                next_team = self.league.teams[home_id]
+            if self.my_team.id == home_id:
+                next_team = self.league.teams[away_id]
+
+        res = self.matchup_prediction(next_team)
         return ReportResult(
             f"{self.my_team.abbrev}'s next matchup is {next_team.abbrev}", res
         )

@@ -2,13 +2,14 @@ from config import config
 
 
 class Matchup(object):
-    def __init__(self, data):
+    def __init__(self, data, league=None):
         """
         Args:
             data (dict): From the https://fantasy.espn.com/apis/v3/games/fba/seasons/2020/segments/0/leagues/
                 endpoint - body.schedule[<some index>]
         """
         self.data = data
+        self.league = league
         self.box_score = {
             self.home_id: self.calc_stats("home"),
             self.away_id: self.calc_stats("away"),
@@ -38,6 +39,22 @@ class Matchup(object):
         """
         return self.data["away"]["teamId"]
 
+    @property
+    def home_team(self):
+        """
+        Returns:
+            (int)
+        """
+        return self.league.teams[self.home_id]
+
+    @property
+    def away_team(self):
+        """
+        Returns:
+            (int)
+        """
+        return self.league.teams[self.away_id]
+
     def calc_stats(self, team_type):
         """
         Args:
@@ -47,6 +64,7 @@ class Matchup(object):
             scoring_stats (dict): Maps stat ID to score
         """
         team_data = self.data[team_type]
+
         stats_up_to_current_scoring_period = {
             int(stat_id): stat_data["score"]
             for stat_id, stat_data in team_data["cumulativeScore"][

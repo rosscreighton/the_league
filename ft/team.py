@@ -43,3 +43,18 @@ class Team(object):
             (ft.matchup_result.MatchupResult)
         """
         return MatchupResult(self, opponent, period)
+
+    def get_matchup(self, period):
+        """
+        Args:
+            period (int)
+
+        Returns:
+            (ft.matchup_result.MatchupResult)
+        """
+        return self.matchups[period]
+
+    def get_opponent_by_period(self, period):
+        matchup = self.matchups[period]
+        opponent = matchup.home_team if self != matchup.home_team else matchup.away_team
+        return opponent
