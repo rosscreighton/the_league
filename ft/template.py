@@ -2,7 +2,7 @@ HOME_TEMPLATE = """
 <!Doctype html>
 <html>
 <head>
-    <title>The League</title>
+    <title>FT</title>
     <style>
         body {
             font-family: "Lucida Console", Monaco, monospace;
@@ -22,7 +22,7 @@ TEAM_TEMPLATE = """
 <!Doctype html>
 <html>
 <head>
-    <title>The League</title>
+    <title>FT</title>
     <style>
         body {
             font-family: "Lucida Console", Monaco, monospace;

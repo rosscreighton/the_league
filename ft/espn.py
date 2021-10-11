@@ -31,7 +31,7 @@ class Espn(object):
             segment (int): Not sure what this is yet. Always 0 for now.
             league_id (int)
         """
-        self.season = kwargs.pop("season", 2021)
+        self.season = kwargs.pop("season", 2022)
         self.segment = kwargs.pop("segment", 0)
         self.league_id = kwargs.pop("league_id", 239167)
         self.session_token = kwargs.pop("session_token", SESSION_TOKEN)
