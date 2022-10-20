@@ -10,7 +10,8 @@ from ft.template import HOME_TEMPLATE, TEAM_TEMPLATE
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-CURRENT_MATCHUP_PERIOD = 2
+CURRENT_MATCHUP_PERIOD = 1
+LAST_NUM_PERIODS = 1
 MY_TEAM = "ROSS"
 
 ALL_TEAMS = [
@@ -18,11 +19,13 @@ ALL_TEAMS = [
     "AJZ",
     "CHOP",
     "DECK",
-    "HELM",
-    "MEYE",
+    "IAN ",
+    "JZ",
+    "NUT",
     "PANI",
     "PAT",
-    "REIN",
+    "PRYN",
+    "PSQd",
     "ROSS",
 ]
 
@@ -36,7 +39,9 @@ def generate_all_teams():
     for team in ALL_TEAMS:
         print(f"Generating {team}")
         try:
-            sim = Simulation(CURRENT_MATCHUP_PERIOD, team, last_num_periods=3)
+            sim = Simulation(
+                CURRENT_MATCHUP_PERIOD, team, last_num_periods=LAST_NUM_PERIODS
+            )
             simulation_result = sim.run()
         except:
             logger.exception("Could not run simulation for %s", team)

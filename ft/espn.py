@@ -1,7 +1,7 @@
 import requests
 
 
-SESSION_TOKEN = "AEBTme8atYoFS7%2F%2F3Hua%2B6yMowd3TwWtmI9AJQ1aY7XH%2BpFt%2BDmLMaxjZatwi%2F1Z0fm%2BuEoVNH0WK%2FS%2FJZ1TVkNli9LsuSs95dhrv9GjVPDhI0JlJbJ5Jqw%2BfMv0aqfb21Mw0h2V0SartwqYX8N5QUkgOnjlIFvZaEI9Q8971zz0e%2FuHhZEZ7tVXTusbhPeCSUhu4eRA5py1swPHhM40r3blg6tz377iwXXOzrX7o6Wr9CboSES6MYsti2Oekn%2F65fXy37tlSWBT2oDI3japvDfQ"
+SESSION_TOKEN = "AEB1OP0LRm6OyUEb3syy%2FZgSmALxhJDo0kUaG7YRg1QqpOVPqSDqA2U3U6AVs1s4JHdIXcKoshN%2FPeVbuXnlS4cjA67eTdNbIrpMakcp3gwtnKH%2BRv%2FSOtZS6tTcWwKTEvIO4gnO2Z63xIWikorhJtGEK0HC4t3nLJsXVxTMd%2Br8opTO2FT5ojJaVUNjOnk7Qeu0fGkJQVRgFS9WfRtUZ9P5%2FozqK6i0r1aodsU6MwcJ%2Bm6dJ3lhfOGaUJaWivU3QLhcuBde7mfXyi1fLT8eI8HP"
 
 QUERY_PARAMS = [
     ("view", "mMatchupScore"),
@@ -31,7 +31,7 @@ class Espn(object):
             segment (int): Not sure what this is yet. Always 0 for now.
             league_id (int)
         """
-        self.season = kwargs.pop("season", 2022)
+        self.season = kwargs.pop("season", 2023)
         self.segment = kwargs.pop("segment", 0)
         self.league_id = kwargs.pop("league_id", 239167)
         self.session_token = kwargs.pop("session_token", SESSION_TOKEN)
