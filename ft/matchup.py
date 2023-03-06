@@ -37,6 +37,8 @@ class Matchup(object):
         Returns:
             (int)
         """
+        if "away" not in self.data:
+            return self.league.BYE_TEAM_ID
         return self.data["away"]["teamId"]
 
     @property
@@ -63,6 +65,8 @@ class Matchup(object):
         Returns:
             scoring_stats (dict): Maps stat ID to score
         """
+        if team_type == "away" and self.away_id == self.league.BYE_TEAM_ID:
+            team_type = "home"
         team_data = self.data[team_type]
 
         stats_up_to_current_scoring_period = {

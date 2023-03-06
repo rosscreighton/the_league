@@ -43,6 +43,7 @@ class Simulation(object):
         for team_data in data["teams"]:
             team = Team(team_data["id"], team_data["abbrev"])
             self.league.add_team(team)
+        self.league.add_bye_team(Team(None, None))
 
         for period in self.periods:
             data = self.espn.fetch_league_data(period)
@@ -251,13 +252,18 @@ class Simulation(object):
         next_data = self.espn.fetch_league_data(self.period + 1)
         next_team = None
         for matchup_data in next_data["schedule"]:
-            away_id = matchup_data["away"]["teamId"]
+            if "away" not in matchup_data:
+                away_id = self.league.BYE_TEAM_ID
+            else:
+                away_id = matchup_data["away"]["teamId"]
             home_id = matchup_data["home"]["teamId"]
             if self.my_team.id == away_id:
                 next_team = self.league.teams[home_id]
             if self.my_team.id == home_id:
                 next_team = self.league.teams[away_id]
 
+        if next_team is None:
+            return None
         res = self.matchup_prediction(next_team)
         return ReportResult(
             f"{self.my_team.abbrev}'s next matchup is {next_team.abbrev}", res

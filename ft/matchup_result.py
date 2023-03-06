@@ -19,6 +19,8 @@ class MatchupResult(object):
         Returns:
             (dict): Maps stat ID to score
         """
+        if self.team.id == self.team.league.BYE_TEAM_ID:
+            return {stat_id: 0 for stat_id in self.their_scores.keys()}
         return self.team.box_score_for_period(self.period)
 
     @property
@@ -27,6 +29,8 @@ class MatchupResult(object):
         Returns:
             (dict): Maps stat ID to score
         """
+        if self.opponent.id == self.team.league.BYE_TEAM_ID:
+            return {stat_id: 0 for stat_id in self.our_scores.keys()}
         return self.opponent.box_score_for_period(self.period)
 
     @property

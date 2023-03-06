@@ -1,4 +1,6 @@
 class League(object):
+    BYE_TEAM_ID = 1000000000000
+
     def __init__(self):
         self.teams = {}
         self.next_matchup_data = {}
@@ -8,6 +10,16 @@ class League(object):
         Args:
             team (ft.team.Team)
         """
+        self.teams[team.id] = team
+        team.league = self
+
+    def add_bye_team(self, team):
+        """
+        Args:
+            team (ft.team.Team)
+        """
+        team.id = self.BYE_TEAM_ID
+        team.abbrev = "BYE"
         self.teams[team.id] = team
         team.league = self
 
