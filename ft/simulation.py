@@ -30,7 +30,7 @@ class Simulation(object):
         self.last_num_periods = last_num_periods
         self.periods = range(max(period + 1 - last_num_periods, 1), period + 1)
         self.league = League()
-        self.espn = Espn()
+        self.espn = Espn(season=2024)
         self.matchup_results_by_period = {}
         self.stat_wins_by_team = {}
         self.stat_wins_by_stat = collections.defaultdict(dict)
